@@ -1,0 +1,469 @@
+-- Combined Script for Synapse
+-- Each script is included as-is, separated by comments for clarity
+
+-- Start of SaitamaMacro.txt
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- Wait for the player to be fully loaded
+while not player do
+    task.wait()
+    player = Players.LocalPlayer
+end
+
+-- Function to reset player
+local function resetPlayer()
+    task.delay(1, function()
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.Health = 0
+            print("Player reset after shove!")
+        end
+    end)
+end
+
+local shoveArgs
+local processedHumanoids = {}
+local defeatedCount = 0
+
+-- Function to count defeated humanoids
+local function countDefeatedHumanoids()
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+
+    local region = Region3.new(
+        player.Character.HumanoidRootPart.Position - Vector3.new(20, 20, 20),
+        player.Character.HumanoidRootPart.Position + Vector3.new(20, 20, 20)
+    )
+
+    local parts = workspace:FindPartsInRegion3(region, nil, math.huge)
+    
+    for _, part in ipairs(parts) do
+        local humanoid = part.Parent:FindFirstChildOfClass("Humanoid")
+        if humanoid and humanoid.Health <= 0 and not processedHumanoids[humanoid] then
+            defeatedCount = defeatedCount + 1
+            processedHumanoids[humanoid] = true
+            print("Humanoid defeated! Count: " .. defeatedCount)
+        end
+    end
+end
+
+-- Function to spam "Shove" efficiently
+local function spamShove(remoteEvent)
+    print("Spamming 'Shove' for 3 seconds!")
+    local startTime = tick()
+    while tick() - startTime < 3 do
+        remoteEvent:FireServer(unpack(shoveArgs))
+        task.wait(0.3) -- Less frequent firing to reduce lag
+    end
+    print("Shove spam finished!")
+
+    -- Reset player 1 second after using shove
+    resetPlayer()
+end
+
+-- Set up the script when the character loads
+local function setupCharacter(character)
+    -- Ensure required instances exist before continuing
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 10)
+    local remoteEvent = character:WaitForChild("Communicate", 10)
+    local backpack = player:WaitForChild("Backpack", 10)
+
+    if not humanoidRootPart or not remoteEvent or not backpack then
+        warn("Missing essential components! Script will not execute.")
+        return
+    end
+
+    -- Wait for the "Shove" tool to exist
+    local shoveTool = backpack:FindFirstChild("Shove") or backpack.ChildAdded:Wait()
+    while shoveTool.Name ~= "Shove" do
+        shoveTool = backpack.ChildAdded:Wait()
+    end
+
+    shoveArgs = {
+        [1] = {
+            ["Tool"] = shoveTool,
+            ["Goal"] = "Console Move",
+            ["ToolName"] = "Shove"
+        }
+    }
+
+    -- Main loop using task.spawn
+    task.spawn(function()
+        while character and character.Parent do
+            countDefeatedHumanoids()
+            if defeatedCount >= 8 then
+                spamShove(remoteEvent)
+                defeatedCount = 0
+                table.clear(processedHumanoids) -- Proper memory cleanup
+            end
+            task.wait(1) -- Lower load on scheduler
+        end
+    end)
+end
+
+-- Connect CharacterAdded event to reset after death
+player.CharacterAdded:Connect(setupCharacter)
+
+-- Initialize on the current character if already loaded
+if player.Character then
+    setupCharacter(player.Character)
+end
+-- End of SaitamaMacro.txt
+
+-- Start of FPS.txt
+setfpscap(10)
+-- End of FPS.txt
+
+-- Start of TPmain.txt
+-- Wait for the game to fully load
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Wait until the LocalPlayer is available
+while not player do
+    task.wait()
+    player = Players.LocalPlayer
+end
+
+-- Wait until the character and HumanoidRootPart are loaded
+repeat task.wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+
+-- Target teleport location
+local targetPosition = Vector3.new(438.30792236328125, 439.51055908203125, -375.7077331542969)
+
+-- Constantly teleport the player to the target position every 0.01 seconds
+while true do
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
+    end
+    task.wait(0.01) -- Smooth teleportation
+end
+-- End of TPmain.txt
+
+-- Start of Noclip.txt
+-- Wait for the game to fully load
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+-- Wait until the LocalPlayer is available
+local Players = game:GetService("Players")
+while not Players.LocalPlayer do
+    wait()
+end
+local player = Players.LocalPlayer
+
+-- Wait until the player's character is loaded and has a HumanoidRootPart
+repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+
+-- Function to disable collisions on all BaseParts in the character
+local function enableNoclip()
+    local character = player.Character
+    if character then
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end
+
+-- Constantly run the noclip function every 0.01 seconds
+spawn(function()
+    while true do
+        enableNoclip()
+        wait(0.01)
+    end
+end)
+-- End of Noclip.txt
+
+-- Start of AutoGameModChecker.txt
+-- Wait for the game to load completely
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- List of moderator user IDs (replace with the actual IDs)
+local moderatorIDs = {
+    268312397, -- Moderator 1
+    2627262431, -- Moderator 2
+    82610981, -- Moderator 3
+    292707170, -- Moderator 4
+    449404798, -- Moderator 5
+    221681529,  -- Moderator 6
+    41022405, -- Moderator 7
+    56721213, -- Moderator 8
+    38307780, -- Moderator 9
+    2039323684, -- Moderator 10
+    1041867508, -- Moderator 11
+    7340338226, -- Moderator 12
+    1001242712, -- Owner of Tsb
+    2992126732, -- Random Kid
+    3235334930, -- Random
+    8172452618, -- Random
+    8182327909, -- Random
+    6075366524, -- Random
+    8217675225, -- Random
+    5554257146, -- Random
+    3629864555, -- Random
+    7753754636, -- Random
+    4354859764, -- Random
+    7819468433,  -- Random
+    8073683106, -- Random
+    6085229191, -- Random
+    3027915029, -- Random
+    8100644723, -- Random
+    8164557160, -- Random
+    5500012275 -- Random
+}
+
+local checkInterval = 0.1
+
+-- Function to check for moderators in the server
+local function checkForModerators()
+    for _, player in pairs(Players:GetPlayers()) do
+        if table.find(moderatorIDs, player.UserId) then
+            -- Kick with a custom message if a moderator joins
+            LocalPlayer:Kick("A game moderator (" .. player.Name .. ") has joined your game.")
+            break
+        end
+    end
+end
+
+-- Loop to check every 0.1 second
+task.spawn(function()
+    while true do
+        checkForModerators()
+        task.wait(checkInterval)
+    end
+end)
+
+-- Make sure the script persists after reset
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1) -- Small delay after reset
+    task.spawn(function()
+        while true do
+            checkForModerators()
+            task.wait(checkInterval)
+        end
+    end)
+end)
+-- End of AutoGameModChecker.txt
+
+-- Start of Emote.txt
+-- Wait for the game to fully load
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local player = game:GetService("Players").LocalPlayer
+
+-- Function to perform the spin emote every 3 seconds
+local function spin()
+    local args = {
+        [1] = {
+            ["Goal"] = "Emote Spin"
+        }
+    }
+
+    while true do
+        if player.Character and player.Character:FindFirstChild("Communicate") then
+            player.Character.Communicate:FireServer(unpack(args))
+        end
+        task.wait(3)
+    end
+end
+
+local function onCharacterAdded(character)
+    -- Make sure any existing thread is stopped before starting a new one
+    if _G.spinThread then
+        coroutine.close(_G.spinThread)
+    end
+    
+    _G.spinThread = coroutine.create(spin)
+    coroutine.resume(_G.spinThread)
+end
+
+-- Ensure LocalPlayer and Character exist before starting
+repeat task.wait() until player and player.Character
+
+-- Connect the function to CharacterAdded for resets
+player.CharacterAdded:Connect(onCharacterAdded)
+
+-- Start the loop initially (if character already exists)
+onCharacterAdded(player.Character)
+-- End of Emote.txt
+
+-- Start of PossibleMacroWIP.txt
+local player = game:GetService("Players").LocalPlayer
+local runService = game:GetService("RunService")
+
+-- List of allowed User IDs
+local allowedUserIds = {
+    7707295397, -- Example UserId 1
+    7707283160, -- Example UserId 2
+    8181887881, -- Example UserId 3
+    7707159118, -- Example UserId 4
+    7707300257, -- Example UserId 5
+    7707308258  -- Example UserId 6
+}
+
+-- Ensure player is loaded
+if not player then
+    repeat task.wait() until game.Players.LocalPlayer
+    player = game.Players.LocalPlayer
+end
+
+-- Stop the script if the player is not allowed
+if not table.find(allowedUserIds, player.UserId) then
+    warn("Unauthorized user. Script will not run.")
+    return
+end
+
+local shoveArgs
+local processedHumanoids = {}
+local defeatedCount = 0
+
+-- Function to reset player after shove
+local function resetPlayer()
+    task.delay(1, function()
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.Health = 0
+            print("Player reset after shove!")
+        end
+    end)
+end
+
+-- Efficient humanoid counting using FindPartsInRegion3
+local function countDefeatedHumanoids()
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local region = Region3.new(
+        player.Character.HumanoidRootPart.Position - Vector3.new(20, 20, 20),
+        player.Character.HumanoidRootPart.Position + Vector3.new(20, 20, 20)
+    )
+
+    local parts = workspace:FindPartsInRegion3(region, nil, math.huge)
+    
+    for _, part in ipairs(parts) do
+        local humanoid = part.Parent:FindFirstChildOfClass("Humanoid")
+        if humanoid and humanoid.Health <= 0 and not processedHumanoids[humanoid] then
+            defeatedCount = defeatedCount + 1
+            processedHumanoids[humanoid] = true
+            print("Humanoid defeated! Count: " .. defeatedCount)
+        end
+    end
+end
+
+-- Function to spam "Shove" efficiently
+local function spamShove(remoteEvent)
+    print("Spamming 'Shove' for 3 seconds!")
+    local startTime = tick()
+    while tick() - startTime < 2 do
+        remoteEvent:FireServer(unpack(shoveArgs))
+        task.wait(0.1) -- Less frequent to avoid lag
+    end
+    print("Shove spam finished!")
+
+    -- Reset player after using shove
+    resetPlayer()
+end
+
+-- Set up the script when the character loads
+local function setupCharacter(character)
+    local remoteEvent = character:WaitForChild("Communicate")
+
+    shoveArgs = {
+        [1] = {
+            ["Tool"] = player:WaitForChild("Backpack"):WaitForChild("Shove"),
+            ["Goal"] = "Console Move",
+            ["ToolName"] = "Shove"
+        }
+    }
+
+    -- Main loop using task.spawn for efficiency
+    task.spawn(function()
+        while character and character.Parent do
+            countDefeatedHumanoids()
+            if defeatedCount >= 2 then
+                spamShove(remoteEvent)
+                defeatedCount = 0
+                table.clear(processedHumanoids) -- Proper memory cleanup
+            end
+            task.wait(1) -- Lower load on scheduler
+        end
+    end)
+end
+
+-- Connect CharacterAdded event to reset after death
+player.CharacterAdded:Connect(setupCharacter)
+
+-- Initialize if the character is already loaded
+if player.Character then
+    setupCharacter(player.Character)
+end
+-- End of PossibleMacroWIP.txt
+
+-- Start of AntiAfk.txt
+-- Wait until the game is fully loaded
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+-- Add a small delay (optional)
+wait(1)
+
+pcall(function()
+    local VirtualUser = game:GetService("VirtualUser")
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end)
+    print("AFK on")
+end)
+-- End of AntiAfk.txt
+
+-- Start of KillLimit.txt
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Wait for the player to fully load
+while not player do
+    task.wait()
+    player = Players.LocalPlayer
+end
+
+-- Wait for leaderstats to load
+local leaderstats
+repeat
+    leaderstats = player:FindFirstChild("leaderstats")
+    task.wait()
+until leaderstats
+
+-- Wait for Kills stat to load
+local kills
+repeat
+    kills = leaderstats:FindFirstChild("Kills")
+    task.wait()
+until kills
+
+-- Main loop to check kills
+while true do
+    print("Current Kills: " .. kills.Value) -- Debugging print
+
+    if kills.Value >= 40430 then
+        print("Kill threshold reached! Closing game...")
+        game:Shutdown() -- Gracefully closes the game
+        return  -- Exits the script to avoid any further execution
+    end
+
+    task.wait(1) -- Checks every second
+end
+-- End of KillLimit.txt
